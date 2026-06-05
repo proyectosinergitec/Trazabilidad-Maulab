@@ -40,13 +40,16 @@ const db = mysql.createPool({
 // --- PARCHE AUTOMÁTICO PARA LA BASE DE DATOS ---
 // Ajusta las columnas para aceptar textos más largos y evitar el error "Data truncated"
 (async () => {
-    try {
-        await db.query("ALTER TABLE asignaciones MODIFY COLUMN estado_asignacion VARCHAR(50) DEFAULT 'Asignada'");
-        await db.query("ALTER TABLE solicitudes MODIFY COLUMN estado VARCHAR(50) DEFAULT 'Pendiente'");
-        console.log("✔️ Esquema de BD verificado/ajustado correctamente.");
-    } catch (err) {
-        console.error("⚠️ Nota al ajustar BD:", err.message);
+    const queries = [
+        "ALTER TABLE asignaciones MODIFY COLUMN estado_asignacion VARCHAR(50) DEFAULT 'Asignada'",
+        "ALTER TABLE solicitudes MODIFY COLUMN estado VARCHAR(50) DEFAULT 'Pendiente'",
+        "ALTER TABLE solicitudes ADD COLUMN urgencia VARCHAR(50) DEFAULT 'Normal'"
+    ];
+    for (const query of queries) {
+        try { await db.query(query); } 
+        catch (err) { /* Ignora el error si la columna ya existe */ }
     }
+    console.log("✔️ Esquema de BD verificado/ajustado correctamente.");
 })();
 
 // --- RUTA DE LOGIN ---
