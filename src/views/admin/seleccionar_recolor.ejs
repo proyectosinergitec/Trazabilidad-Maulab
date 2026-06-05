@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Sinergitec | Asignar Recolector</title>
+    <style>
+        body { font-family: sans-serif; background: #f4f7f6; display: flex; justify-content: center; align-items: center; height: 100vh; }
+        .card { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); width: 350px; text-align: center; }
+        select { width: 100%; padding: 10px; margin: 20px 0; border-radius: 5px; }
+        button { background: #27ae60; color: white; border: none; padding: 12px; border-radius: 5px; width: 100%; cursor: pointer; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h2>Asignar Recolector</h2>
+        <form action="/administrador/confirmar-asignacion" method="POST">
+            <input type="hidden" name="solicitudesIds" value="<%= solicitudesIds %>">
+            <label>Selecciona quién hará la ruta:</label>
+            <select name="recolectorId" required>
+                <option value="">-- Ver lista --</option>
+                <% recolectores.forEach(r => { %>
+                    <option value="<%= r.id %>">👤 <%= r.nombre %></option>
+                <% }) %>
+            </select>
+            <button type="submit">Confirmar Ruta</button>
+        </form>
+        <br>
+        <a href="/administrador/dashboard" style="color: #666; text-decoration: none; font-size: 0.8em;">Cancelar</a>
+    </div>
+</body>
+</html>

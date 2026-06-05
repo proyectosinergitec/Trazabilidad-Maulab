@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>MAULAB | Laboratorio Central</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.css" />
+    <style>
+        :root { 
+            --primary-green: #27ae60; 
+            --dark-green: #1e8449; 
+            --forest: #145a32;
+            --danger: #e74c3c; 
+            --bg: #f0f4f1; 
+        }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); margin: 0; display: flex; }
+
+        /* --- SIDEBAR VERDE --- */
+        .sidebar { 
+            width: 260px; 
+            background: linear-gradient(180deg, var(--forest) 0%, #0a2f1a 100%); 
+            color: white; 
+            height: 100vh; padding: 25px; position: fixed; 
+            box-shadow: 4px 0 15px rgba(0,0,0,0.2); 
+            display: flex; flex-direction: column;
+            z-index: 1000;
+        }
+        .sidebar h2 { color: var(--primary-green); margin-bottom: 5px; letter-spacing: 1px; }
+        .sidebar .role-tag { 
+            background: var(--primary-green); 
+            color: white; 
+            font-size: 0.7em; 
+            padding: 3px 8px; 
+            border-radius: 4px; 
+            text-transform: uppercase;
+            font-weight: bold;
+        }
+        .sidebar p { font-size: 0.9em; opacity: 0.9; margin: 15px 0; }
+        
+        .sidebar nav { flex-grow: 1; margin-top: 20px; }
+        .sidebar nav a { 
+            display: flex; align-items: center; gap: 12px;
+            color: rgba(255,255,255,0.8); text-decoration: none; 
+            padding: 12px; border-radius: 8px; margin-bottom: 10px; 
+            transition: 0.3s; font-size: 0.95em;
+        }
+        .sidebar nav a:hover { background: rgba(255,255,255,0.1); color: white; }
+        .sidebar nav a.active { background: var(--primary-green); color: white; font-weight: bold; box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
+
+        .btn-logout { 
+            color: #ff9f9f; text-decoration: none; font-weight: bold; 
+            padding: 12px; border-top: 1px solid rgba(255,255,255,0.1);
+            display: flex; align-items: center; gap: 10px; margin-top: auto;
+        }
+
+        /* --- CONTENIDO PRINCIPAL --- */
+        .main { margin-left: 285px; flex-grow: 1; padding: 30px; width: calc(100% - 285px); }
+        .header-top { 
+            background: white; 
+            padding: 20px; 
+            border-radius: 12px; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            margin-bottom: 25px;
+            border-left: 5px solid var(--primary-green);
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        }
+        
+        .card { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); margin-bottom: 30px; border: 1px solid #e0e0e0; }
+        
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { padding: 12px; border-bottom: 1px solid #eee; text-align: left; }
+        th { background: #f8fdf9; font-size: 0.85em; text-transform: uppercase; color: var(--forest); font-weight: bold; }
+
+        .order-badge {
+            background: var(--dark-green); color: white; padding: 2px 7px;
+            border-radius: 50%; font-size: 0.75em; margin-left: 8px; font-weight: bold;
+            display: none;
+        }
+
+        .btn { border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: bold; color: white; transition: 0.2s; }
+        .btn-trazar { background: var(--dark-green); }
+        .btn-trazar:hover { background: var(--forest); }
+        .btn-limpiar { background: #95a5a6; }
+        .btn-asignar { background: var(--primary-green); box-shadow: 0 4px 10px rgba(39, 174, 96, 0.3); }
+        .btn-asignar:hover { transform: translateY(-2px); }
+
+        #map { height: 450px; border-radius: 12px; border: 2px solid #d4e1d5; z-index: 1; }
+        
+        .etiqueta-mapa {
+            background: var(--forest);
+            color: white;
+            border: 1px solid var(--primary-green);
+            border-radius: 4px;
+            padding: 2px 6px;
+            font-weight: bold;
+            font-size: 11px;
+        }
+
+        .badge { padding: 4px 8px; border-radius: 4px; font-size: 0.85em; font-weight: bold; }
+        .time-text { font-size: 0.85em; color: #666; display: block; }
+    </style>
+</head>
+<body>
+
+    <div class="sidebar">
+        <h2>MAULAB</h2>
+        <span class="role-tag">Laboratorio Central</span>
+        <p>Sesión: <strong><%= nombre %></strong></p>
+        <hr style="opacity: 0.1; margin-bottom: 10px;">
+        
+        <nav>
+            <a href="/administrador/dashboard" class="active"><span>📍</span> Panel Logístico</a>
+            <a href="/administrador/historial"><span>📋</span> Historial de Entregas</a>
+            <a href="/logout" class="btn-logout"><span>🚪</span> Finalizar Turno</a>
+        </nav>
+
+        
+    </div>
+
+    <div class="main">
+        <div class="header-top">
+            <h1 style="margin:0; color: var(--forest);">Gestión de Trazabilidad Clínica</h1>
+            <div style="display: flex; gap: 10px;">
+                <button class="btn btn-trazar" onclick="trazarRutaPorTramos()">🗺️ TRAZAR RUTA</button>
+                <button class="btn btn-limpiar" onclick="limpiarMapa(true)">🧹 LIMPIAR</button>
+                <button class="btn btn-asignar" onclick="asignarRecolector()">🚚 ASIGNAR ORDEN</button>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3 style="color: var(--dark-green); margin-top: 0;">📝 Solicitudes Pendientes</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th width="60">Orden</th>
+                        <th>Clínica Origen</th>
+                        <th>Tipo de Muestra</th>
+                        <th>Prioridad</th>
+                        <th>Distancia</th>
+                        <th>Fecha y Hora</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% solicitudes.forEach(sol => { %>
+                        <tr>
+                            <td>
+                                <input type="checkbox" class="muestra-check" 
+                                       onclick="gestionarOrden(this)"
+                                       data-id="<%= sol.id %>" 
+                                       data-lat="<%= sol.latitud %>" 
+                                       data-lng="<%= sol.longitud %>" 
+                                       data-nombre="<%= sol.nombre_clinica %>"
+                                       data-urgencia="<%= sol.urgencia %>">
+                                <span class="order-badge" id="badge-<%= sol.id %>"></span>
+                            </td>
+                            <td><strong><%= sol.nombre_clinica %></strong></td>
+                            <td><%= sol.tipo_muestra %></td>
+                            <td><b style="color: <%= sol.urgencia === 'Urgente' ? 'var(--danger)' : 'var(--dark-green)' %>"><%= sol.urgencia %></b></td>
+                            <td>📍 <%= sol.distancia %> km</td>
+                            <td>
+                                <span class="time-text">📅 <%= new Date(sol.fecha_creacion).toLocaleDateString() %></span>
+                                <strong>⏰ <%= new Date(sol.fecha_creacion).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) %></strong>
+                            </td>
+                        </tr>
+                    <% }) %>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="card">
+            <div id="map"></div>
+        </div>
+
+        <div class="card">
+            <h3 style="color: var(--dark-green); margin-top: 0;">🚚 Monitoreo de Recolección</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Clínica</th>
+                        <th>Recolector</th>
+                        <th>Asignación</th>
+                        <th>Estado Actual</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% asignadas.forEach(asig => { %>
+                        <tr>
+                            <td>#<%= asig.solicitud_id %></td>
+                            <td><%= asig.nombre_clinica %></td>
+                            <td>👤 <%= asig.nombre_recolector %></td>
+                            <td>
+                                <small>📅 <%= new Date(asig.fecha_asignacion).toLocaleDateString() %></small><br>
+                                <strong>⏰ <%= new Date(asig.fecha_asignacion).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) %></strong>
+                            </td>
+                            <td><span class="badge" style="background:#d1fae5; color:#145a32;"><%= asig.estado_asignacion %></span></td>
+                        </tr>
+                    <% }) %>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.js"></script>
+
+    <script>
+        const labLat = 19.366668413641182, labLng = -99.19010865315482;
+        let map;
+        let controlesActivos = []; 
+        let colaSeleccion = []; 
+        let marcadoresPendientesLayer;
+        const coloresRutas = ['#27ae60', '#2ecc71', '#16a085', '#3498db', '#f1c40f', '#e67e22'];
+        let indiceColor = 0;
+
+        // Icono Central en color Verde
+        const IconoLab = L.icon({ iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png', iconSize: [25, 41], iconAnchor: [12, 41] });
+        const IconoUrgente = L.icon({ iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png', iconSize: [25, 41], iconAnchor: [12, 41] });
+        const IconoNormal = L.icon({ iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-blue.png', iconSize: [25, 41], iconAnchor: [12, 41] });
+
+        window.onload = function() {
+            map = L.map('map').setView([labLat, labLng], 12);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+            L.marker([labLat, labLng], {icon: IconoLab}).addTo(map)
+                .bindTooltip("LABORATORIO CENTRAL", {permanent: true, direction: 'top', className: 'etiqueta-mapa'});
+
+            marcadoresPendientesLayer = L.layerGroup().addTo(map);
+
+            <% solicitudes.forEach(sol => { %>
+                L.marker([<%= sol.latitud %>, <%= sol.longitud %>], {
+                    icon: '<%= sol.urgencia %>' === 'Urgente' ? IconoUrgente : IconoNormal
+                }).bindTooltip("<%= sol.nombre_clinica %> - <%= sol.urgencia %>", {
+                    permanent: true, 
+                    direction: 'top', 
+                    className: 'etiqueta-mapa', offset: [0, -10]
+                }).addTo(marcadoresPendientesLayer);
+            <% }) %>
+        };
+
+        function gestionarOrden(checkbox) {
+            const id = checkbox.dataset.id;
+            if (checkbox.checked) {
+                colaSeleccion.push(id);
+            } else {
+                colaSeleccion = colaSeleccion.filter(item => item !== id);
+            }
+            actualizarIndicadores();
+        }
+
+        function actualizarIndicadores() {
+            document.querySelectorAll('.order-badge').forEach(b => b.style.display = 'none');
+            colaSeleccion.forEach((id, index) => {
+                const badge = document.getElementById(`badge-${id}`);
+                if (badge) {
+                    badge.innerText = index + 1;
+                    badge.style.display = 'inline-block';
+                }
+            });
+        }
+
+        function trazarRutaPorTramos() {
+            if (colaSeleccion.length === 0) return alert("Selecciona muestras en orden");
+            limpiarMapa(false);
+
+            // Ocultar marcadores por defecto al trazar ruta para evitar que se superpongan
+            if (marcadoresPendientesLayer) map.removeLayer(marcadoresPendientesLayer);
+
+            const puntos = [L.latLng(labLat, labLng)];
+            colaSeleccion.forEach(id => {
+                const cb = document.querySelector(`.muestra-check[data-id="${id}"]`);
+                puntos.push(L.latLng(parseFloat(cb.dataset.lat), parseFloat(cb.dataset.lng)));
+            });
+            puntos.push(L.latLng(labLat, labLng));
+
+            const control = L.Routing.control({
+                waypoints: puntos,
+                router: L.Routing.mapbox('<%= mapboxToken %>', { 
+                    profile: 'mapbox/driving-traffic',
+                    language: 'es'
+                }),
+                routeLine: function(route, options) {
+                    const wps = route.waypointIndices;
+                    const coords = route.coordinates;
+                    const colores = ['#e74c3c', '#3498db', '#f1c40f', '#2ecc71', '#e67e22', '#e84393', '#1abc9c']; // Rojo, Azul, Amarillo, Verde, Naranja, Rosa, Turquesa
+                    const morado = '#8e44ad';
+                    const fg = L.featureGroup();
+                    
+                    for (let i = 0; i < wps.length - 1; i++) {
+                        const start = wps[i];
+                        const end = wps[i + 1];
+                        const tramo = coords.slice(start, end + 1);
+                        
+                        const esRegreso = (i === wps.length - 2); // Detectar si es el último tramo
+                        const colorTramo = esRegreso ? morado : colores[i % colores.length];
+                        
+                        L.polyline(tramo, { color: colorTramo, weight: 8, opacity: 0.8 }).addTo(fg);
+                    }
+                    return fg;
+                },
+                addWaypoints: false,
+                draggableWaypoints: false,
+                fitSelectedRoutes: true, 
+                createMarker: function(i, wp, nWps) {
+                    // Evitamos duplicar el marcador del Laboratorio Central al inicio y al final
+                    if (i === 0 || i === nWps - 1) return null; 
+                    
+                    const idActual = colaSeleccion[i - 1];
+                    const cb = document.querySelector(`.muestra-check[data-id="${idActual}"]`);
+                    const icono = cb.dataset.urgencia === 'Urgente' ? IconoUrgente : IconoNormal;
+                    
+                    return L.marker(wp.latLng, {icon: icono})
+                        .bindTooltip(`#${i} ${cb.dataset.nombre}`, {
+                            permanent: true, direction: 'top', className: 'etiqueta-mapa', offset: [0, -10]
+                        });
+                },
+                show: true 
+            }).addTo(map);
+            controlesActivos.push(control);
+        }
+
+        function limpiarMapa(todo) {
+            controlesActivos.forEach(c => map.removeControl(c));
+            controlesActivos = [];
+            if (todo) {
+                colaSeleccion = [];
+                document.querySelectorAll('.muestra-check').forEach(cb => cb.checked = false);
+                actualizarIndicadores();
+
+                // Restaurar los marcadores de solicitudes iniciales
+                if (marcadoresPendientesLayer && !map.hasLayer(marcadoresPendientesLayer)) {
+                    marcadoresPendientesLayer.addTo(map);
+                }
+            }
+        }
+
+        function asignarRecolector() {
+            if (colaSeleccion.length === 0) return alert("Selecciona el orden de las muestras");
+            const ordenIds = colaSeleccion.join(',');
+            window.location.href = `/administrador/asignar/${ordenIds}`;
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Sinergitec | Panel de Clínica</title>
+    <style>
+        :root { 
+            --primary-blue: #2980b9; 
+            --dark-blue: #1c5980; 
+            --light-blue: #ebf5fb;
+            --danger: #e74c3c; 
+            --success: #27ae60;
+            --bg: #f4f7f9; 
+        }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); margin: 0; padding: 0; }
+        
+        /* Navbar superior */
+        header {
+            background: var(--primary-blue);
+            color: white;
+            padding: 15px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .container { max-width: 1000px; margin: 30px auto; padding: 0 20px; }
+        
+        .card { 
+            background: white; 
+            padding: 25px; 
+            border-radius: 12px; 
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05); 
+            margin-bottom: 30px; 
+            border-top: 5px solid var(--primary-blue);
+        }
+
+        h1, h3 { color: var(--dark-blue); margin-top: 0; }
+        
+        /* Formulario */
+        .form-group { display: flex; gap: 15px; margin-bottom: 20px; align-items: flex-end; flex-wrap: wrap; }
+        .input-box { display: flex; flex-direction: column; gap: 5px; }
+        
+        input, select { 
+            padding: 12px; 
+            border: 1px solid #dce4ec; 
+            border-radius: 8px; 
+            font-size: 14px;
+            background: #fdfdfd;
+        }
+        input:focus, select:focus { border-color: var(--primary-blue); outline: none; box-shadow: 0 0 5px rgba(41, 128, 185, 0.2); }
+
+        .btn-add { 
+            background: var(--primary-blue); 
+            color: white; 
+            border: none; 
+            padding: 12px 25px; 
+            border-radius: 8px; 
+            cursor: pointer; 
+            font-weight: bold; 
+            transition: 0.3s;
+        }
+        .btn-add:hover { background: var(--dark-blue); transform: translateY(-1px); }
+
+        .btn-send { 
+            background: var(--success); 
+            color: white; 
+            border: none; 
+            padding: 16px; 
+            border-radius: 10px; 
+            width: 100%; 
+            font-size: 1.1em; 
+            font-weight: bold;
+            cursor: pointer; 
+            display: none; 
+            margin-top: 20px;
+            box-shadow: 0 4px 10px rgba(39, 174, 96, 0.2);
+        }
+
+        .btn-qr { 
+            background: var(--dark-blue); 
+            color: white; 
+            border: none; 
+            padding: 8px 15px; 
+            border-radius: 6px; 
+            cursor: pointer; 
+            font-size: 0.85em;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        /* Tablas */
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        th { background: var(--light-blue); color: var(--dark-blue); padding: 12px; text-align: left; font-size: 0.9em; text-transform: uppercase; }
+        td { padding: 15px 12px; border-bottom: 1px solid #f1f1f1; color: #444; }
+        
+        .badge-urgente { color: var(--danger); font-weight: bold; background: #fee; padding: 4px 8px; border-radius: 4px; }
+        .status-badge { 
+            padding: 5px 10px; 
+            border-radius: 20px; 
+            font-size: 0.75em; 
+            background: #eee; 
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+        
+        #otro_contenedor { display: none; margin-top: 10px; width: 100%; }
+        #tipo_otro { width: 95%; border: 2px solid var(--primary-blue); }
+
+        .logout-link { color: #fff; text-decoration: none; font-weight: bold; opacity: 0.9; }
+        .logout-link:hover { opacity: 1; text-decoration: underline; }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div>
+            <span style="font-weight: 800; font-size: 1.4em; letter-spacing: 1px;">SINERGITEC</span>
+            <span style="margin-left: 10px; opacity: 0.8; font-size: 0.9em;">| Panel Clínica</span>
+        </div>
+        <div>
+            <span style="margin-right: 20px;">👤 <%= nombre %></span>
+            <a href="/logout" class="logout-link">Cerrar Sesión</a>
+        </div>
+    </header>
+
+    <div class="container">
+        
+        <div class="card">
+            <h3>🧪 Registrar Envío de Muestras</h3>
+            <div class="form-group">
+                <div class="input-box" style="flex: 2; min-width: 250px;">
+                    <label>Tipo de Muestra</label>
+                    <select id="tipo_select" onchange="verificarOtro(this.value)">
+                        <option value="">-- Seleccione una opción --</option>
+                        <option value="Sangre">Sangre (BH, Química, etc)</option>
+                        <option value="Orina">Orina (EGO)</option>
+                        <option value="Biopsia">Biopsia / Tejido</option>
+                        <option value="Hisopado">Hisopado (PCR/Antígenos)</option>
+                        <option value="Copro">Copro (Heces)</option>
+                        <option value="Otro">Otro (Especificar)</option>
+                    </select>
+                    
+                    <div id="otro_contenedor">
+                        <label><small>Especifique:</small></label>
+                        <input type="text" id="tipo_otro" placeholder="¿Qué tipo de muestra es?">
+                    </div>
+                </div>
+
+                <div class="input-box" style="flex: 1; min-width: 150px;">
+                    <label>Urgencia</label>
+                    <select id="urgencia">
+                        <option value="Normal">Normal</option>
+                        <option value="Urgente">Urgente</option>
+                    </select>
+                </div>
+                <button class="btn-add" onclick="agregarALista()">+ Añadir</button>
+            </div>
+
+            <div id="contenedorTemporal" style="display: none;">
+                <h4 style="color: var(--primary-blue); border-bottom: 2px solid var(--light-blue); padding-bottom: 5px;">Muestras por confirmar</h4>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Muestra</th>
+                            <th>Prioridad</th>
+                            <th>Acción</th>
+                        </tr>
+                    </thead>
+                    <tbody id="listaMuestras"></tbody>
+                </table>
+                <button class="btn-send" id="btnEnviar" onclick="enviarLote()">🚀 Confirmar Solicitud de Recolección</button>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3>📋 Seguimiento de Solicitudes</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Folio</th>
+                        <th>Muestra</th>
+                        <th>Prioridad</th>
+                        <th>Estado</th>
+                        <th>Acción</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% solicitudes.forEach(sol => { %>
+                        <tr>
+                            <td>#<%= sol.id %></td>
+                            <td><strong><%= sol.tipo_muestra %></strong></td>
+                            <td>
+                                <span class="<%= sol.urgencia === 'Urgente' ? 'badge-urgente' : '' %>">
+                                    <%= sol.urgencia %>
+                                </span>
+                            </td>
+                            <td><span class="status-badge"><%= sol.estado %></span></td>
+                            <td>
+                                <button class="btn-qr" onclick="window.open('/generar-qr/<%= sol.id %>', 'QR', 'width=350,height=550')">
+                                    📷 Etiqueta
+                                </button>
+                            </td>
+                        </tr>
+                    <% }) %>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        let muestrasPorEnviar = [];
+
+        function verificarOtro(valor) {
+            const contenedor = document.getElementById('otro_contenedor');
+            if (valor === "Otro") {
+                contenedor.style.display = "block";
+                document.getElementById('tipo_otro').focus();
+            } else {
+                contenedor.style.display = "none";
+            }
+        }
+
+        function agregarALista() {
+            const select = document.getElementById('tipo_select');
+            const inputOtro = document.getElementById('tipo_otro');
+            const urgencia = document.getElementById('urgencia').value;
+            
+            let tipoFinal = select.value;
+
+            if (tipoFinal === "Otro") {
+                tipoFinal = inputOtro.value.trim();
+            }
+
+            if (!tipoFinal) {
+                return alert("Por favor selecciona o escribe el tipo de muestra.");
+            }
+
+            muestrasPorEnviar.push({ tipo: tipoFinal, urgencia });
+            
+            select.value = "";
+            inputOtro.value = "";
+            document.getElementById('otro_contenedor').style.display = "none";
+            
+            render();
+        }
+
+        function quitar(index) {
+            muestrasPorEnviar.splice(index, 1);
+            render();
+        }
+
+        function render() {
+            const lista = document.getElementById('listaMuestras');
+            const contenedor = document.getElementById('contenedorTemporal');
+            const btn = document.getElementById('btnEnviar');
+
+            contenedor.style.display = muestrasPorEnviar.length > 0 ? "block" : "none";
+            btn.style.display = muestrasPorEnviar.length > 0 ? "block" : "none";
+
+            lista.innerHTML = muestrasPorEnviar.map((m, i) => `
+                <tr>
+                    <td>${m.tipo}</td>
+                    <td><span class="${m.urgencia === 'Urgente' ? 'badge-urgente' : ''}">${m.urgencia}</span></td>
+                    <td><button onclick="quitar(${i})" style="color: #e74c3c; border:none; background:none; cursor:pointer; font-weight:bold;">✕ Eliminar</button></td>
+                </tr>
+            `).join('');
+        }
+
+        async function enviarLote() {
+            try {
+                const res = await fetch('/clinica/solicitar-multiple', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ muestras: muestrasPorEnviar })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    alert("Muestras registradas correctamente.");
+                    location.reload();
+                }
+            } catch (e) { alert("Error al conectar con Sinergitec"); }
+        }
+    </script>
+</body>
+</html>

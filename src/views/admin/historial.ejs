@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>MAULAB | Historial de Entregas</title>
+    <style>
+        :root { 
+            --primary-green: #27ae60; 
+            --dark-green: #1e8449; 
+            --forest: #145a32;
+            --bg: #f0f4f1; 
+        }
+        body { 
+            font-family: 'Segoe UI', sans-serif; 
+            background: var(--bg); 
+            padding: 40px; 
+            color: #333;
+            margin: 0;
+        }
+        .header-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+        h1 {
+            margin: 0;
+            color: var(--forest);
+        }
+        .btn-back {
+            background: white;
+            color: var(--dark-green);
+            text-decoration: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-weight: bold;
+            border: 2px solid var(--dark-green);
+            transition: 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .btn-back:hover {
+            background: var(--dark-green);
+            color: white;
+            transform: translateY(-2px);
+        }
+        .card { 
+            background: white; 
+            padding: 30px; 
+            border-radius: 12px; 
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05); 
+            border: 1px solid #e0e0e0;
+        }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th, td { padding: 15px 12px; text-align: left; border-bottom: 1px solid #eee; }
+        th { background: #f8fdf9; font-size: 0.85em; text-transform: uppercase; color: var(--forest); font-weight: bold; }
+        tbody tr { transition: background 0.2s; }
+        tbody tr:hover { background-color: #f9fbf9; }
+        .badge-success { background: #d1fae5; color: #145a32; padding: 6px 12px; border-radius: 6px; font-size: 0.85em; font-weight: bold; display: inline-block; }
+    </style>
+</head>
+<body>
+
+    <div class="header-top">
+        <h1>📋 Historial de Recolecciones Finalizadas</h1>
+        <a href="/administrador/dashboard" class="btn-back"><span>←</span> Volver al Panel Activo</a>
+    </div>
+    
+    <div class="card">
+        <table>
+            <thead>
+                <tr>
+                    <th>Fecha</th>
+                    <th>Clínica</th>
+                    <th>Muestra</th>
+                    <th>Recolector</th>
+                    <th>Estado</th>
+                </tr>
+            </thead>
+            <tbody>
+                <% historial.forEach(h => { %>
+                    <tr>
+                        <td>
+                            <span style="color: #666; font-size: 0.9em;">📅 <%= new Date(h.fecha_asignacion).toLocaleDateString() %></span><br>
+                            <strong>⏰ <%= new Date(h.fecha_asignacion).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) %></strong>
+                        </td>
+                        <td><b><%= h.nombre_clinica %></b></td>
+                        <td><%= h.tipo_muestra %></td>
+                        <td>👤 <%= h.nombre_recolector %></td>
+                        <td><span class="badge-success">✔ Entregada</span></td>
+                    </tr>
+                <% }) %>
+            </tbody>
+        </table>
+    </div>
+</body>
+</html>
